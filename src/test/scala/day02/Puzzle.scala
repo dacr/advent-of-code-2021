@@ -19,30 +19,23 @@ object Puzzle {
 
 //@RunWith(classOf[zio.test.junit.ZTestJUnitRunner])
 object Puzzle02Test extends DefaultRunnableSpec {
-  def spec = suite("puzzle day 2")(
-    test("star#1 example") {
+  val day  = "day02"
+  def spec = suite(s"puzzle $day")(
+    test("star#1") {
       for {
-        input <- Helpers.readFileContent("data/day02/star1-input-given-1.txt")
-        result = Puzzle.resolveStar1(input)
-      } yield assertTrue(result == 0)
+        exampleInput <- Helpers.readFileContent(s"data/$day-example-given-1.txt")
+        exampleResult = Puzzle.resolveStar1(exampleInput)
+        puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-given-1.txt")
+        puzzleResult  = Puzzle.resolveStar1(puzzleInput)
+      } yield assertTrue(exampleResult == 0) && assertTrue(puzzleResult == 0)
     },
-    test("star#1 input") {
+    test("star#2") {
       for {
-        input <- Helpers.readFileContent("data/day02/star1-input-given-2.txt")
-        result = Puzzle.resolveStar1(input)
-      } yield assertTrue(result == 0)
-    },
-    test("star#2 example") {
-      for {
-        input <- Helpers.readFileContent("data/day02/star2-input-given-1.txt")
-        result = Puzzle.resolveStar2(input)
-      } yield assertTrue(result == 0)
-    },
-    test("star#2 input") {
-      for {
-        input <- Helpers.readFileContent("data/day02/star2-input-given-2.txt")
-        result = Puzzle.resolveStar2(input)
-      } yield assertTrue(result == 0)
-    },
+        exampleInput <- Helpers.readFileContent(s"data/$day-example-given-1.txt")
+        exampleResult = Puzzle.resolveStar2(exampleInput)
+        puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-given-1.txt")
+        puzzleResult  = Puzzle.resolveStar2(puzzleInput)
+      } yield assertTrue(exampleResult == 0) && assertTrue(puzzleResult == 0)
+    }
   )
 }
