@@ -5,6 +5,8 @@ import zio.*
 import zio.test.*
 import zio.test.Assertion.*
 
+// ------------------------------------------------------------------------------
+
 def resolveStar1(input: String): Int = {
   input.trim
     .split("\n")
@@ -14,6 +16,7 @@ def resolveStar1(input: String): Int = {
     .collect { case a::b::_ => a < b }
     .count(identity)
 }
+// ------------------------------------------------------------------------------
 
 def resolveStar2(input: String): Int = {
   input.trim
@@ -26,6 +29,7 @@ def resolveStar2(input: String): Int = {
     .collect { case a::b::_ => a < b }
     .count(identity)
 }
+// ------------------------------------------------------------------------------
 
 object Puzzle01Test extends DefaultRunnableSpec {
   val day  = "day01"
