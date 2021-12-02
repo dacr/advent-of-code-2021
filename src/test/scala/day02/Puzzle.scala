@@ -26,6 +26,7 @@ object Puzzle {
   // ------------------------------------------------------------------------------
 
   case class Position(horizontal: Int = 0, depth: Int = 0, aim: Int = 0)
+
   def resolveStar2(input: String): Int = {
     val finalPosition =
       input
@@ -36,6 +37,8 @@ object Puzzle {
         }
     finalPosition.depth * finalPosition.horizontal
   }
+  // ------------------------------------------------------------------------------
+
 }
 
 //@RunWith(classOf[zio.test.junit.ZTestJUnitRunner])
