@@ -8,9 +8,11 @@ import zio.test.Assertion.*
 def resolveStar1(input: String): Int = {
   input.trim
     .split("\n")
+    .toList
     .map(_.toInt)
     .sliding(2, 1)
-    .count { case Array(a, b) => a < b }
+    .collect { case a::b::_ => a < b }
+    .count(identity)
 }
 
 def resolveStar2(input: String): Int = {
@@ -21,7 +23,8 @@ def resolveStar2(input: String): Int = {
     .toList
     .map(_.sum)
     .sliding(2, 1)
-    .count { case List(a, b) => a < b }
+    .collect { case a::b::_ => a < b }
+    .count(identity)
 }
 
 object Puzzle01Test extends DefaultRunnableSpec {
