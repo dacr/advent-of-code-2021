@@ -41,23 +41,22 @@ object Puzzle {
 
 }
 
-//@RunWith(classOf[zio.test.junit.ZTestJUnitRunner])
 object Puzzle02Test extends DefaultRunnableSpec {
   val day  = "day02"
   def spec = suite(s"puzzle $day")(
     test("star#1") {
       for {
-        exampleInput <- Helpers.readFileContent(s"data/$day-example-given-1.txt")
+        exampleInput <- Helpers.readFileContent(s"data/$day-example-1.txt")
         exampleResult = Puzzle.resolveStar1(exampleInput)
-        puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-given-1.txt")
+        puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
         puzzleResult  = Puzzle.resolveStar1(puzzleInput)
       } yield assertTrue(exampleResult == 150) && assertTrue(puzzleResult == 1693300)
     },
     test("star#2") {
       for {
-        exampleInput <- Helpers.readFileContent(s"data/$day-example-given-1.txt")
+        exampleInput <- Helpers.readFileContent(s"data/$day-example-1.txt")
         exampleResult = Puzzle.resolveStar2(exampleInput)
-        puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-given-1.txt")
+        puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
         puzzleResult  = Puzzle.resolveStar2(puzzleInput)
       } yield assertTrue(exampleResult == 900) && assertTrue(puzzleResult == 1857958050)
     }
