@@ -40,11 +40,11 @@ def resolveStar1(input: String): Int =
 
 // ------------------------------------------------------------------------------
 
-def extract[T](input: Iterable[Array[T]], pos: Int): Iterable[T] =
+def extract[T, S<:Seq[T]](input: Iterable[S], pos: Int): Iterable[T] =
   input.flatMap(_.lift(pos))
 
 def search(values: Array[String], onLessOrEqual: Char, onMore: Char, pos: Int = 0): String = {
-  val extracted = extract(values.map(_.toCharArray), pos)
+  val extracted = extract(values.map(_.toSeq), pos)
   val counters  = extracted.groupBy(identity).view.mapValues(_.size)
   val count0    = counters.getOrElse('0', 0)
   val count1    = counters.getOrElse('1', 0)
@@ -74,7 +74,7 @@ object Puzzle03Test extends DefaultRunnableSpec {
     test("flip tools") {
       for {
         result <- ZIO.succeed(flip(List("AB", "CD")))
-      } yield assertTrue(result == List("AC", "BD"))
+      } yield assert(result)(hasSameElements(List("AC", "BD")))
     },
     test("least or most comment item tools") {
       for {
