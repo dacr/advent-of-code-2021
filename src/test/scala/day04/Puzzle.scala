@@ -13,13 +13,12 @@ case class ChosenNumbers(numbers: Iterable[Int])
 
 case class Cell(number: Int, marked: Boolean = false)
 
-case class Grid(rows: Iterable[Seq[Cell]]) {
+case class Grid(rows: Iterable[Seq[Cell]]):
   def play(number: Int): Grid =
     Grid(rows.map(row => row.map(cell => cell.copy(marked = if (number == cell.number) true else cell.marked))))
   def isWin: Boolean          =
     rows.exists(_.forall(_.marked)) ||
       0.until(rows.head.size).exists(pos => rows.forall(row => row.lift(pos).filter(_.marked).isDefined))
-}
 
 def parseGrids(lines: List[String]): List[Grid] =
   lines
