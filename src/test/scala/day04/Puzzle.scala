@@ -46,6 +46,7 @@ def parsePuzzle(input: String): (ChosenNumbers, List[Grid]) =
 
 // ------------------------------------------------------------------------------
 
+@tailrec
 def playGame(numbers: Iterable[Int], grids: List[Grid]): Int =
   numbers match {
     case number :: remainingNumbers =>
@@ -62,8 +63,25 @@ def resolveStar1(input: String): Int =
 
 // ------------------------------------------------------------------------------
 
+@tailrec
+def wonGrids(numbers: Iterable[Int], grids: List[Grid], accu: List[(Int, Grid)] = Nil): List[(Int, Grid)] =
+  numbers match {
+    case Nil                        => accu
+    case number :: remainingNumbers =>
+      val (won, notWon) = grids.map(_.play(number)).partition(_.isWin)
+      wonGrids(
+        remainingNumbers,
+        notWon,
+        accu ++ won.map(grid => number -> grid)
+      )
+  }
+
 def resolveStar2(input: String): Int =
-  0
+  val (chosenNumbers, grids) = parsePuzzle(input)
+  val winners                = wonGrids(chosenNumbers.numbers, grids)
+  winners.last match {
+    case (number, grid) => number * grid.rows.flatMap(_.filterNot(_.marked).map(_.number)).sum
+  }
 
 // ------------------------------------------------------------------------------
 
@@ -76,7 +94,7 @@ object Puzzle04Test extends DefaultRunnableSpec {
         exampleResult = resolveStar1(exampleInput)
         puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
         puzzleResult  = resolveStar1(puzzleInput)
-      } yield assertTrue(exampleResult == 4512) && assertTrue(puzzleResult == -1)
+      } yield assertTrue(exampleResult == 4512) && assertTrue(puzzleResult == 72770)
     },
     test("star#2") {
       for {
@@ -84,7 +102,7 @@ object Puzzle04Test extends DefaultRunnableSpec {
         exampleResult = resolveStar2(exampleInput)
         puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
         puzzleResult  = resolveStar2(puzzleInput)
-      } yield assertTrue(exampleResult == -1) && assertTrue(puzzleResult == -1)
+      } yield assertTrue(exampleResult == 1924) && assertTrue(puzzleResult == 13912)
     }
   )
 }
