@@ -42,7 +42,6 @@ def resolveStar1(input: String): Int =
     .filter(vent => vent.start.x == vent.end.x || vent.start.y == vent.end.y)
     .flatMap(_.points())
     .groupBy(identity)
-    .view
     .count((coord, sz) => sz.size >= 2)
 
 // ------------------------------------------------------------------------------
@@ -52,7 +51,6 @@ def resolveStar2(input: String): Int =
   vents
     .flatMap(_.points())
     .groupBy(identity)
-    .view
     .count((coord, sz) => sz.size >= 2)
 
 
