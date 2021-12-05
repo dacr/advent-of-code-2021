@@ -21,7 +21,7 @@ def resolveStar2(input: String): Int =
 // ------------------------------------------------------------------------------
 
 object Puzzle05Test extends DefaultRunnableSpec {
-  val day  = "day05"
+  val day  = "day06"
   def spec = suite(s"puzzle $day")(
     test("star#1") {
       for {
@@ -29,7 +29,7 @@ object Puzzle05Test extends DefaultRunnableSpec {
         exampleResult = resolveStar1(exampleInput)
         puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
         puzzleResult  = resolveStar1(puzzleInput)
-      } yield assertTrue(exampleResult == 5) && assertTrue(puzzleResult == -1)
+      } yield assertTrue(exampleResult == -1) && assertTrue(puzzleResult == -1)
     },
     test("star#2") {
       for {
@@ -37,7 +37,7 @@ object Puzzle05Test extends DefaultRunnableSpec {
         exampleResult = resolveStar2(exampleInput)
         puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
         puzzleResult  = resolveStar2(puzzleInput)
-      } yield assertTrue(exampleResult == 12) && assertTrue(puzzleResult == -1)
+      } yield assertTrue(exampleResult == -1) && assertTrue(puzzleResult == -1)
     }
   )
 }
