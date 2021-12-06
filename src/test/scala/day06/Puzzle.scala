@@ -11,49 +11,39 @@ import scala.math.*
 
 // ------------------------------------------------------------------------------
 type State = Vector[Int]
-def nextState(state:State):State =
+def nextState(state: State): State =
   state
-    .map(n => if (n==0) 6 else n-1)
-    .appendedAll(state.filter(_==0).map(_ => 8))
+    .map(n => if (n == 0) 6 else n - 1)
+    .appendedAll(state.filter(_ == 0).map(_ => 8))
 
-def states(initialState:State):LazyList[State]=
+def states(initialState: State): LazyList[State] =
   val next = nextState(initialState)
-  next#::states(next)
+  next #:: states(next) // This is not recursive, this is lazy evaluation
 
-def resolveStar1(input: String): Int =
+def resolvePuzzle(input: String, rounds: Int): Int =
   val state = input.trim.split(",").map(_.toInt).toVector
-  states(state).drop(79).head.size
+  states(state).drop(rounds - 1).head.size
 
 // ------------------------------------------------------------------------------
 
-def resolveStar2(input: String): Int =
-  val state = input.trim.split(",").map(_.toInt).toVector
-  states(state).drop(255).head.size
-
-// ------------------------------------------------------------------------------
-
-
-type EnhancedState = Map[Int,BigInt]
-def statesEnhanced(state:EnhancedState):LazyList[EnhancedState] =
-  val decreased:EnhancedState = state.map((k,v)=> (k-1)->v)
+type RefactoredState = Map[Int, BigInt]
+def refactoredStates(state: RefactoredState): LazyList[RefactoredState] =
+  val decreased = state.map((k, v) => (k - 1) -> v)
   val generated = decreased.getOrElse(-1, BigInt(0))
-  val next =
+  val next      =
     (decreased.removed(-1) +
-      (8-> generated)) +
-      (6-> (decreased.getOrElse(6,BigInt(0)) + decreased.getOrElse(-1,BigInt(0))))
-  next#::statesEnhanced(next)
+      (8 -> generated)) +
+      (6 -> (decreased.getOrElse(6, BigInt(0)) + decreased.getOrElse(-1, BigInt(0))))
+  next #:: refactoredStates(next) // This is not recursive, this is lazy evaluation
 
-def resolveStar2Enhanced(input: String): BigInt =
+def refactoredResolvePuzzle(input: String, rounds: Int): BigInt =
   val state =
-    input
-      .trim
+    input.trim
       .split(",")
       .map(_.toInt)
       .groupBy(identity)
-      .map((k,v) => k->BigInt(v.size))
-  statesEnhanced(state).drop(255).head.values.sum
-
-
+      .map((k, v) => k -> BigInt(v.size))
+  refactoredStates(state).drop(rounds - 1).head.values.sum
 
 // ------------------------------------------------------------------------------
 
@@ -63,18 +53,18 @@ object Puzzle06Test extends DefaultRunnableSpec {
     test("star#1") {
       for {
         exampleInput <- Helpers.readFileContent(s"data/$day-example-1.txt")
-        exampleResult = resolveStar1(exampleInput)
+        exampleResult = resolvePuzzle(exampleInput, 80)
         puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
-        puzzleResult  = resolveStar1(puzzleInput)
+        puzzleResult  = resolvePuzzle(puzzleInput, 80)
       } yield assertTrue(exampleResult == 5934) && assertTrue(puzzleResult == 365131)
     },
     test("star#2") {
       for {
         exampleInput <- Helpers.readFileContent(s"data/$day-example-1.txt")
-        exampleResult = resolveStar1(exampleInput)
+        exampleResult = refactoredResolvePuzzle(exampleInput, 80)
         puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
-        puzzleResult  = resolveStar2Enhanced(puzzleInput)
-      } yield assertTrue(exampleResult == 5934) && assertTrue(puzzleResult == BigInt("1650309278600",10))
+        puzzleResult  = refactoredResolvePuzzle(puzzleInput, 256)
+      } yield assertTrue(exampleResult == BigInt("5934")) && assertTrue(puzzleResult == BigInt("1650309278600"))
     } @@ timeout(600.seconds)
   )
 }
