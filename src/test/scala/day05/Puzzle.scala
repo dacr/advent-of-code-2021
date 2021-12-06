@@ -13,7 +13,7 @@ import scala.math.*
 case class Coord(x: Int, y: Int)
 
 case class Vent(start: Coord, end: Coord):
-  def points(): Seq[Coord] = // enhanced naive based draw algorithm : https://en.wikipedia.org/wiki/Line_drawing_algorithm
+  def pointsUsingEnhancedNaive(): Seq[Coord] = // enhanced naive based draw algorithm : https://en.wikipedia.org/wiki/Line_drawing_algorithm
     val dx = end.x - start.x
     val dy = end.y - start.y
     if dx == 0 then start.y.to(end.y, signum(dy)).map(y => Coord(start.x, y))
@@ -21,8 +21,23 @@ case class Vent(start: Coord, end: Coord):
     else if abs(dx) > abs(dy) then start.x.to(end.x, signum(dx)).map(x => Coord(x, start.y + dy * (x - start.x) / dx))
     else start.y.to(end.y, signum(dy)).map(y => Coord(start.x + dx * (y - start.y) / dy, y))
 
-  def pointsUsingBresenham():Seq[Coord]= // Bresenham's line algorithm : Bresenham's line algorithm
-    ??? // TODO to implement
+//  def pointsUsingBresenham():Seq[Coord]= // Bresenham's line algorithm : Bresenham's line algorithm
+//    val dx = abs(end.x - start.x)
+//    val dy = -abs(end.y - start.y)
+//    val sx = signum(end.x - start.x)
+//    val sy = signum(end.y - start.y)
+//    val err = dx + dy
+//    def makePoints(x:Int, y:Int, err:Int):LazyList[Coord] =
+//      Coord(x,y) #:: (
+//        if (x == end.x && y==end.y) LazyList.empty
+//        if (2*err >= dy) makePoints(x+sx, y, err+dy)
+//        if (2*err <= dx) makePoints(x, y+sy, err+dx)
+//      )
+//    makePoints(start.x, start.y, err)
+//
+  def points(): Seq[Coord] =
+    //pointsUsingBresenham()
+    pointsUsingEnhancedNaive()
 
 
 def line2vent(line: String): Vent =
