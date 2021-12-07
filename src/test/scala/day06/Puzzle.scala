@@ -65,6 +65,6 @@ object Puzzle06Test extends DefaultRunnableSpec {
         puzzleInput  <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
         puzzleResult  = refactoredResolvePuzzle(puzzleInput, 256)
       } yield assertTrue(exampleResult == BigInt("5934")) && assertTrue(puzzleResult == BigInt("1650309278600"))
-    } @@ timeout(600.seconds)
+    } @@ timeout(600.seconds) // Not needed thanks to the refactor ;)
   )
 }
