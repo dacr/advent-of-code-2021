@@ -53,6 +53,10 @@ def lowCoords(cave: Cave): Iterable[Coord] =
   val coords = 0.until(width).flatMap(x => 0.until(height).map(y => x -> y))
   coords.collect { case (x, y) if isLowest(cave, x, y) => (x, y) }
 
+def levelAt(cave:Cave, coord:Coord):Int =
+  val (x,y) = coord
+  cave(y)(x)
+
 def aroundsOf(cave: Cave, coord: Coord): Iterable[Coord] =
   val (x, y) = coord
   Seq.empty :++
@@ -64,21 +68,35 @@ def aroundsOf(cave: Cave, coord: Coord): Iterable[Coord] =
 def isUnvisitedLowest(cave: Cave, coord: Coord, visited: Seq[Coord]): Boolean =
   val (x, y)    = coord
   val reference = cave(y)(x)
-  val levels    =
+  val levels =
     aroundsOf(cave, coord)
       .filterNot(visited.contains)
       .collect { case (x, y) => cave(y)(x) }
-  val result    = if (levels.isEmpty) false else levels.forall(_ > reference)
-  result
+  levels.forall(_ > reference)
+
+def display(cave:Cave,selected:Set[Coord]):Unit =
+  val width  = cave.head.size
+  val height = cave.size
+  0.until(height).foreach{y=>
+    0.until(width).foreach { x =>
+      if selected.contains(x->y) then print(levelAt(cave, x->y))
+      else print(".")
+    }
+    println()
+  }
+  println()
+
 
 def basinArea(cave: Cave, from: Coord): List[Coord] =
   @tailrec
   def walk(toVisit: List[Coord], visited: Seq[Coord], accu: List[Coord]): List[Coord] =
-    //println(accu.size+" : "+accu.mkString+ "      "+toVisit.mkString + "  -  " + visited.mkString)
+    //display(cave, accu.toSet)
     toVisit match {
       case Nil => accu
+      case head :: remaining if levelAt(cave, head)==9 =>
+        walk(remaining, visited :+ head, accu)
       case head :: remaining if isUnvisitedLowest(cave, head, visited) =>
-        val arounds = aroundsOf(cave, head).filterNot(remaining.contains)
+        val arounds = aroundsOf(cave, head).filterNot(remaining.contains).filterNot(accu.contains)
         walk(remaining :++ arounds, visited :+ head, head::accu)
       case head :: remaining =>
         walk(remaining, visited :+ head, accu)
@@ -93,7 +111,6 @@ def resolveStar2(input: String): Long =
     .toList
     .sortBy(- _)
     .take(3)
-    .tap(println)
     .product
 
 // ------------------------------------------------------------------------------
@@ -115,9 +132,10 @@ object Puzzle09Test extends DefaultRunnableSpec {
         exampleResult1 = resolveStar2(exampleInput1)
          puzzleInput   <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
          puzzleResult   = resolveStar2(puzzleInput)
-      } yield assertTrue(exampleResult1 == 1134L)  &&
-        assertTrue(puzzleResult != 1017600L) &&
-        assertTrue(puzzleResult == -1L)
+      } yield assertTrue(exampleResult1 == 1134L) &&
+        assertTrue(puzzleResult > 1017600L) &&
+        assertTrue(puzzleResult < 280596750L) &&
+        assertTrue(puzzleResult == 1263735L)
     }
   )
 }
