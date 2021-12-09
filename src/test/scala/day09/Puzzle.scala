@@ -10,25 +10,30 @@ import scala.annotation.tailrec
 import scala.math.*
 import scala.util.chaining.*
 
-type Cave = Seq[Seq[Int]]
+type Cave  = Seq[Seq[Int]]
+type Coord = (Int, Int)
 
 def parse(input: String): Cave =
   input
     .split("\n")
     .toSeq
-    .map(line => line.toSeq.map(_.toInt-48))
+    .map(line => line.toSeq.map(_.toInt - 48))
 
 // ------------------------------------------------------------------------------
+def isLowest(cave: Cave, coord: Coord): Boolean =
+  val (x, y) = coord
+  isLowest(cave, x, y)
+
 def isLowest(cave: Cave, x: Int, y: Int): Boolean =
   val reference        = cave(y)(x)
-  val levels: Seq[Int] =(
+  val levels: Seq[Int] = (
     Seq.empty :++
       cave.lift(y - 1).flatMap(_.lift(x)) :++
       cave.lift(y + 1).flatMap(_.lift(x)) :++
       cave.lift(y).flatMap(_.lift(x - 1)) :++
       cave.lift(y).flatMap(_.lift(x + 1))
-    )
-    levels.forall(_ > reference)
+  )
+  levels.forall(_ > reference)
 
 def resolveStar1(input: String): Int =
   val cave   = parse(input)
@@ -37,14 +42,64 @@ def resolveStar1(input: String): Int =
   val coords = 0.until(width).flatMap(x => 0.until(height).map(y => x -> y))
   coords
     .collect { case (x, y) if isLowest(cave, x, y) => cave(y)(x) }
-    .tap(println)
     .map(_ + 1)
     .sum
 
 // ------------------------------------------------------------------------------
 
+def lowCoords(cave: Cave): Iterable[Coord] =
+  val width  = cave.head.size
+  val height = cave.size
+  val coords = 0.until(width).flatMap(x => 0.until(height).map(y => x -> y))
+  coords.collect { case (x, y) if isLowest(cave, x, y) => (x, y) }
+
+def aroundsOf(cave: Cave, coord: Coord): Iterable[Coord] =
+  val (x, y) = coord
+  Seq.empty :++
+    cave.lift(y - 1).flatMap(_.lift(x)).map(_ => x -> (y - 1)) :++
+    cave.lift(y + 1).flatMap(_.lift(x)).map(_ => x -> (y + 1)) :++
+    cave.lift(y).flatMap(_.lift(x - 1)).map(_ => (x - 1) -> y) :++
+    cave.lift(y).flatMap(_.lift(x + 1)).map(_ => (x + 1) -> y)
+
+def isUnvisitedLowest(cave: Cave, coord: Coord, visited: Seq[Coord]): Boolean =
+  val (x, y)    = coord
+  val reference = cave(y)(x)
+  val levels    =
+    aroundsOf(cave, coord)
+      .filterNot(visited.contains)
+      .collect { case (x, y) => cave(y)(x) }
+  val result    = if (levels.isEmpty) false else levels.forall(_ > reference)
+  if (coord == (0, 4) || levels.isEmpty) println(s"    ==> ${levels.mkString(" ")} > $reference " + result)
+  result
+
+def basinArea(cave: Cave, from: Coord): List[Coord] =
+  @tailrec
+  def walk(toVisit: List[Coord], visited: Seq[Coord], accu: List[Coord]): List[Coord] =
+    println(accu.mkString+ "      "+toVisit.mkString + "  -  " + visited.mkString)
+    toVisit match {
+      case Nil                                                         => accu
+      case head :: remaining if visited.contains(head)                 =>
+        walk(remaining, visited, accu)
+      case head :: remaining if isUnvisitedLowest(cave, head, visited) =>
+        val arounds =
+          aroundsOf(cave, head)
+            .filterNot(visited.contains)
+            .filterNot(remaining.contains)
+        walk(remaining :++ arounds, visited :+ head, head::accu)
+      case head :: remaining                                           =>
+        walk(remaining, visited :+ head, accu)
+    }
+  walk(List(from), Nil, Nil)
+
 def resolveStar2(input: String): Int =
-  0
+  val cave = parse(input)
+  val lows = lowCoords(cave)
+  lows
+    .map(coord => basinArea(cave, coord).size)
+    .toList
+    .sortBy(-_)
+    .take(3)
+    .product
 
 // ------------------------------------------------------------------------------
 
@@ -63,9 +118,9 @@ object Puzzle09Test extends DefaultRunnableSpec {
       for {
         exampleInput1 <- Helpers.readFileContent(s"data/$day-example-1.txt")
         exampleResult1 = resolveStar2(exampleInput1)
-        puzzleInput   <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
-        puzzleResult   = resolveStar2(puzzleInput)
-      } yield assertTrue(exampleResult1 == -1) && assertTrue(puzzleResult == -1)
+        // puzzleInput   <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
+        // puzzleResult   = resolveStar2(puzzleInput)
+      } yield assertTrue(exampleResult1 == 1134) // && assertTrue(puzzleResult == -1)
     }
   )
 }
