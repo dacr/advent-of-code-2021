@@ -53,8 +53,8 @@ def lowCoords(cave: Cave): Iterable[Coord] =
   val coords = 0.until(width).flatMap(x => 0.until(height).map(y => x -> y))
   coords.collect { case (x, y) if isLowest(cave, x, y) => (x, y) }
 
-def levelAt(cave:Cave, coord:Coord):Int =
-  val (x,y) = coord
+def levelAt(cave: Cave, coord: Coord): Int =
+  val (x, y) = coord
   cave(y)(x)
 
 def aroundsOf(cave: Cave, coord: Coord): Iterable[Coord] =
@@ -68,36 +68,38 @@ def aroundsOf(cave: Cave, coord: Coord): Iterable[Coord] =
 def isUnvisitedLowest(cave: Cave, coord: Coord, visited: Seq[Coord]): Boolean =
   val (x, y)    = coord
   val reference = cave(y)(x)
-  val levels =
+  val levels    =
     aroundsOf(cave, coord)
       .filterNot(visited.contains)
       .collect { case (x, y) => cave(y)(x) }
   levels.forall(_ > reference)
 
-def display(cave:Cave,selected:Set[Coord]):Unit =
+def display(cave: Cave, selected: Set[Coord]): Unit =
   val width  = cave.head.size
   val height = cave.size
-  0.until(height).foreach{y=>
+  0.until(height).foreach { y =>
     0.until(width).foreach { x =>
-      if selected.contains(x->y) then print(levelAt(cave, x->y))
+      if selected.contains(x -> y) then print(levelAt(cave, x -> y))
       else print(".")
     }
     println()
   }
   println()
 
-
-def basinArea(cave: Cave, from: Coord): List[Coord] =
+def basinArea(cave: Cave, from: Coord, limit: Int = 9): List[Coord] =
   @tailrec
   def walk(toVisit: List[Coord], visited: Seq[Coord], accu: List[Coord]): List[Coord] =
-    //display(cave, accu.toSet)
+    // display(cave, accu.toSet)
     toVisit match {
       case Nil => accu
-      case head :: remaining if levelAt(cave, head)==9 =>
+
+      case head :: remaining if levelAt(cave, head) >= limit =>
         walk(remaining, visited :+ head, accu)
+
       case head :: remaining if isUnvisitedLowest(cave, head, visited) =>
         val arounds = aroundsOf(cave, head).filterNot(remaining.contains).filterNot(accu.contains)
-        walk(remaining :++ arounds, visited :+ head, head::accu)
+        walk(remaining :++ arounds, visited :+ head, head :: accu)
+
       case head :: remaining =>
         walk(remaining, visited :+ head, accu)
     }
@@ -109,7 +111,7 @@ def resolveStar2(input: String): Long =
   lows
     .map(coord => basinArea(cave, coord).size.toLong)
     .toList
-    .sortBy(- _)
+    .sortBy(-_)
     .take(3)
     .product
 
@@ -130,8 +132,8 @@ object Puzzle09Test extends DefaultRunnableSpec {
       for {
         exampleInput1 <- Helpers.readFileContent(s"data/$day-example-1.txt")
         exampleResult1 = resolveStar2(exampleInput1)
-         puzzleInput   <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
-         puzzleResult   = resolveStar2(puzzleInput)
+        puzzleInput   <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
+        puzzleResult   = resolveStar2(puzzleInput)
       } yield assertTrue(exampleResult1 == 1134L) &&
         assertTrue(puzzleResult > 1017600L) &&
         assertTrue(puzzleResult < 280596750L) &&
