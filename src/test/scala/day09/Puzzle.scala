@@ -69,36 +69,31 @@ def isUnvisitedLowest(cave: Cave, coord: Coord, visited: Seq[Coord]): Boolean =
       .filterNot(visited.contains)
       .collect { case (x, y) => cave(y)(x) }
   val result    = if (levels.isEmpty) false else levels.forall(_ > reference)
-  if (coord == (0, 4) || levels.isEmpty) println(s"    ==> ${levels.mkString(" ")} > $reference " + result)
   result
 
 def basinArea(cave: Cave, from: Coord): List[Coord] =
   @tailrec
   def walk(toVisit: List[Coord], visited: Seq[Coord], accu: List[Coord]): List[Coord] =
-    println(accu.mkString+ "      "+toVisit.mkString + "  -  " + visited.mkString)
+    //println(accu.size+" : "+accu.mkString+ "      "+toVisit.mkString + "  -  " + visited.mkString)
     toVisit match {
-      case Nil                                                         => accu
-      case head :: remaining if visited.contains(head)                 =>
-        walk(remaining, visited, accu)
+      case Nil => accu
       case head :: remaining if isUnvisitedLowest(cave, head, visited) =>
-        val arounds =
-          aroundsOf(cave, head)
-            .filterNot(visited.contains)
-            .filterNot(remaining.contains)
+        val arounds = aroundsOf(cave, head).filterNot(remaining.contains)
         walk(remaining :++ arounds, visited :+ head, head::accu)
-      case head :: remaining                                           =>
+      case head :: remaining =>
         walk(remaining, visited :+ head, accu)
     }
   walk(List(from), Nil, Nil)
 
-def resolveStar2(input: String): Int =
+def resolveStar2(input: String): Long =
   val cave = parse(input)
   val lows = lowCoords(cave)
   lows
-    .map(coord => basinArea(cave, coord).size)
+    .map(coord => basinArea(cave, coord).size.toLong)
     .toList
-    .sortBy(-_)
+    .sortBy(- _)
     .take(3)
+    .tap(println)
     .product
 
 // ------------------------------------------------------------------------------
@@ -118,9 +113,11 @@ object Puzzle09Test extends DefaultRunnableSpec {
       for {
         exampleInput1 <- Helpers.readFileContent(s"data/$day-example-1.txt")
         exampleResult1 = resolveStar2(exampleInput1)
-        // puzzleInput   <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
-        // puzzleResult   = resolveStar2(puzzleInput)
-      } yield assertTrue(exampleResult1 == 1134) // && assertTrue(puzzleResult == -1)
+         puzzleInput   <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
+         puzzleResult   = resolveStar2(puzzleInput)
+      } yield assertTrue(exampleResult1 == 1134L)  &&
+        assertTrue(puzzleResult != 1017600L) &&
+        assertTrue(puzzleResult == -1L)
     }
   )
 }
