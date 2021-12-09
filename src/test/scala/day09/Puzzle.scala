@@ -77,19 +77,18 @@ def isUnvisitedLowest(cave: Cave, coord: Coord, visited: Seq[Coord]): Boolean =
 def display(cave: Cave, selected: Set[Coord]): Unit =
   val width  = cave.head.size
   val height = cave.size
-  0.until(height).foreach { y =>
-    0.until(width).foreach { x =>
-      if selected.contains(x -> y) then print(levelAt(cave, x -> y))
-      else print(".")
-    }
-    println()
-  }
-  println()
+  val repr =
+    0.until(height).map { y =>
+      0.until(width).map { x =>
+        if selected.contains(x -> y) then levelAt(cave, x -> y).toString else "."
+      }.mkString
+    }.mkString("\n")
+  println(repr)
 
 def basinArea(cave: Cave, from: Coord, limit: Int = 9): List[Coord] =
   @tailrec
   def walk(toVisit: List[Coord], visited: Seq[Coord], accu: List[Coord]): List[Coord] =
-    // display(cave, accu.toSet)
+    //display(cave, accu.toSet)
     toVisit match {
       case Nil => accu
 
@@ -103,7 +102,9 @@ def basinArea(cave: Cave, from: Coord, limit: Int = 9): List[Coord] =
       case head :: remaining =>
         walk(remaining, visited :+ head, accu)
     }
-  walk(List(from), Nil, Nil)
+  val area = walk(List(from), Nil, Nil)
+  //display(cave, area.toSet)
+  area
 
 def resolveStar2(input: String): Long =
   val cave = parse(input)
