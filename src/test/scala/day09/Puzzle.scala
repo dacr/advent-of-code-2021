@@ -104,6 +104,8 @@ def resolveStar2(input: String): Int =
     .take(3)
     .product
 
+// TODO try again using a fixpoints approach ?
+
 // ------------------------------------------------------------------------------
 
 object Puzzle09Test extends DefaultRunnableSpec {
