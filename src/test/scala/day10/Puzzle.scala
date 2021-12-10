@@ -19,7 +19,7 @@ def parse(input:String):Seq[Chunk]=
 
 
 // ------------------------------------------------------------------------------
-val values=Map(
+val errorValues=Map(
   ')'->3,
   ']'->57,
   '}'->1197,
@@ -38,7 +38,7 @@ def isOpen(input:Char):Boolean =
 def isClose(input:Char):Boolean =
   ")]}>".contains(input)
 
-def closeValue(input:Char):Int = values(input)
+def closeValue(input:Char):Int = errorValues(input)
 
 def isMatch(left:Char, right:Char):Boolean =
   isOpen(left) && isClose(right) && matches(left)==right
@@ -66,9 +66,37 @@ def resolveStar1(input: String): Int =
   analyze(chunks)
 
 // ------------------------------------------------------------------------------
+def closingFor(input:Char)=matches(input)
 
-def resolveStar2(input: String): Int =
-  0
+val autoCompleteValues=Map(
+  ')'->1,
+  ']'->2,
+  '}'->3,
+  '>'->4,
+)
+
+
+def autocomplete(chunk:Chunk):Chunk=
+  @tailrec
+  def worker(remaining:Chunk, opens:Chunk=Nil, closes:Chunk=Nil):Chunk =
+    remaining match
+      case Nil => closes
+      case head::tail if isOpen(head) => worker(tail, head::opens, closingFor(head)::closes)
+      case head::tail => worker(tail, opens.tail, closes.tail)
+  worker(chunk)
+
+def computeScore(chunk:Chunk):Long =
+  chunk.foldLeft(0L)( (score, input) => score * 5L + autoCompleteValues(input))
+
+def resolveStar2(input: String): Long =
+  val chunks = parse(input)
+  val scores =
+    chunks
+      .filter(chunk => scoreChunk(chunk)==0)
+      .map(autocomplete)
+      .map(computeScore)
+      .sorted
+  scores.lift(scores.size/2).getOrElse(0)
 
 // ------------------------------------------------------------------------------
 
@@ -83,13 +111,21 @@ object Puzzle10Test extends DefaultRunnableSpec {
         puzzleResult  = resolveStar1(puzzleInput)
       } yield assertTrue(exampleResult == 26397) && assertTrue(puzzleResult == 374061)
     },
+    test("star#2 autocomplete tests") {
+      val result1 = autocomplete("[({(<(())[]>[[{[]{<()<>>".toList).mkString
+      val result2 = autocomplete("{<[[]]>}<{[{[{[]{()[[[]".toList).mkString
+      assertTrue(result1 == "}}]])})]") &&
+      assertTrue(result2 == "]]}}]}]}>")
+    },
     test("star#2") {
       for {
         exampleInput1 <- Helpers.readFileContent(s"data/$day-example-1.txt")
         exampleResult1 = resolveStar2(exampleInput1)
         puzzleInput   <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
         puzzleResult   = resolveStar2(puzzleInput)
-      } yield assertTrue(exampleResult1 == -1) && assertTrue(puzzleResult == -1)
+      } yield assertTrue(exampleResult1 == 288957L) &&
+        assertTrue(puzzleResult > 617930596L) &&
+        assertTrue(puzzleResult == 2116639949L)
     }
   )
 }
