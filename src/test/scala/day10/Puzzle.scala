@@ -45,14 +45,14 @@ def getErrorValue(input:Char):Int = errorValues(input)
 
 def scoreChunk(chunk:Chunk):Int =
   @tailrec
-  def expect(remaining:Chunk, openedStack:List[Char]=Nil, score:Int=0):Int =
+  def expect(remaining:Chunk, opens:List[Char]=Nil, score:Int=0):Int =
     remaining match
       case _ if score > 0 => score
       case Nil => score
-      case head::tail if isOpen(head) => expect(tail, head::openedStack, 0)
-      case head::tail if isClose(head) && openedStack.isEmpty => getErrorValue(head)
-      case head::tail if isClose(head) && !isMatch(openedStack.head,head) => getErrorValue(head)
-      case head::tail => expect(tail, openedStack.tail, score)
+      case head::tail if isOpen(head) => expect(tail, head::opens, 0)
+      case head::tail if isClose(head) && opens.isEmpty => getErrorValue(head)
+      case head::tail if isClose(head) && !isMatch(opens.head,head) => getErrorValue(head)
+      case head::tail => expect(tail, opens.tail, score)
   expect(chunk)
 
 
