@@ -17,56 +17,52 @@ def parse(input:String):Seq[Chunk]=
     .split("\n")
     .map(_.toList)
 
-
 // ------------------------------------------------------------------------------
-val errorValues=Map(
-  ')'->3,
-  ']'->57,
-  '}'->1197,
-  '>'->25137,
-)
+
 val matches= Map(
     '('->')',
     '['->']',
     '{'->'}',
     '<'->'>',
   )
+val opens = matches.keys.toSet
+val closes = matches.values.toSet
 
-def isOpen(input:Char):Boolean =
-  "([{<".contains(input)
+def closeOf(input:Char) = matches(input)
+def isOpen(input:Char):Boolean = opens.contains(input)
+def isClose(input:Char):Boolean = closes.contains(input)
+def isMatch(left:Char, right:Char):Boolean = isOpen(left) && isClose(right) && closeOf(left)==right
 
-def isClose(input:Char):Boolean =
-  ")]}>".contains(input)
+// ------------------------------------------------------------------------------
 
-def closeValue(input:Char):Int = errorValues(input)
+val errorValues=Map(
+  ')'->3,
+  ']'->57,
+  '}'->1197,
+  '>'->25137,
+)
+def getErrorValue(input:Char):Int = errorValues(input)
 
-def isMatch(left:Char, right:Char):Boolean =
-  isOpen(left) && isClose(right) && matches(left)==right
-
-def scoreChunk(chunk:Chunk):Int=
+def scoreChunk(chunk:Chunk):Int =
   @tailrec
-  def expect(remaining:Chunk, stack:List[Char]=Nil, score:Int=0):Int =
+  def expect(remaining:Chunk, openedStack:List[Char]=Nil, score:Int=0):Int =
     remaining match
       case _ if score > 0 => score
       case Nil => score
-      case head::tail if isOpen(head) => expect(tail, head::stack, 0)
-      case head::tail if isClose(head) && stack.isEmpty => closeValue(head)
-      case head::tail if isClose(head) && !isMatch(stack.head,head) => closeValue(head)
-      case head::tail => expect(tail, stack.tail, score)
+      case head::tail if isOpen(head) => expect(tail, head::openedStack, 0)
+      case head::tail if isClose(head) && openedStack.isEmpty => getErrorValue(head)
+      case head::tail if isClose(head) && !isMatch(openedStack.head,head) => getErrorValue(head)
+      case head::tail => expect(tail, openedStack.tail, score)
   expect(chunk)
 
 
-def analyze(chunks:Iterable[Chunk])=
+def resolveStar1(input: String): Int =
+  val chunks = parse(input)
   chunks
     .map(scoreChunk)
     .sum
 
-def resolveStar1(input: String): Int =
-  val chunks = parse(input)
-  analyze(chunks)
-
 // ------------------------------------------------------------------------------
-def closingFor(input:Char)=matches(input)
 
 val autoCompleteValues=Map(
   ')'->1,
@@ -75,18 +71,17 @@ val autoCompleteValues=Map(
   '>'->4,
 )
 
+def computeScore(chunk:Chunk):Long =
+  chunk.foldLeft(0L)( (score, input) => score * 5L + autoCompleteValues(input))
 
 def autocomplete(chunk:Chunk):Chunk=
   @tailrec
   def worker(remaining:Chunk, opens:Chunk=Nil, closes:Chunk=Nil):Chunk =
     remaining match
       case Nil => closes
-      case head::tail if isOpen(head) => worker(tail, head::opens, closingFor(head)::closes)
+      case head::tail if isOpen(head) => worker(tail, head::opens, closeOf(head)::closes)
       case head::tail => worker(tail, opens.tail, closes.tail)
   worker(chunk)
-
-def computeScore(chunk:Chunk):Long =
-  chunk.foldLeft(0L)( (score, input) => score * 5L + autoCompleteValues(input))
 
 def resolveStar2(input: String): Long =
   val chunks = parse(input)
