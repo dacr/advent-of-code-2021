@@ -49,24 +49,20 @@ def flashes(currentCells: Cells, flashableCoords: List[Coord], flashedCoords: Se
       flashes(increasedArounds, newFlashable ++ remaining, flashedCoords + coord)
 
 def nextState(cells: Cells): (Cells, Set[Coord]) =
-  val increasedCells =
-    cells
-      .map { case (coord, value) => coord -> (value + 1) }
-
-  val flashableCoords =
-    increasedCells.toList
-      .collect { case (c, v) if v > 9 => c }
-      .sortBy { case (x, y) => y * 10 + x }
-
-  val (flashedCells, flashedCoords) =
-    flashes(increasedCells, flashableCoords, Set.empty)
-
-  val resettedCells = flashedCells.map {
+  val withIncreasedCells            = cells.view.mapValues(_ + 1)
+  val flashableCoords               = withIncreasedCells.toList.collect { case (c, v) if v > 9 => c }
+  val (flashedCells, flashedCoords) = flashes(withIncreasedCells.toMap, flashableCoords, Set.empty)
+  val resettedCells                 = flashedCells.map {
     case (c, v) if v > 9 => c -> 0
     case curr            => curr
   }
-
   (resettedCells, flashedCoords)
+
+def nextStateOnly(from: Cells): Cells =
+  nextState(from) match { case (to, _) => to }
+
+def statesFlow(state: (Cells, Set[Coord])): LazyList[(Cells, Set[Coord])] =
+  state #:: statesFlow(nextState(state._1))
 
 def coords(width: Int, height: Int): Iterable[Coord] =
   0.until(width).flatMap(x => 0.until(height).map(y => x -> y))
@@ -84,36 +80,21 @@ def parse(input: String): Cells =
 // ------------------------------------------------------------------------------
 
 def resolveStar1(input: String, upToStep: Int = 100): BigInt =
-  val cells              = parse(input)
-  val (lastState, count) =
-    1.to(upToStep)
-      .foldRight(cells -> 0) { case (step, (currentState, flashedCount)) =>
-        val (newState, flashedCoords) = nextState(currentState)
-        newState -> (flashedCount + flashedCoords.size)
-      }
-  count
+  val initialState = parse(input)
+  statesFlow(initialState -> Set.empty)
+    .take(upToStep + 1)
+    .map { case (currentState, flashedCoords) => flashedCoords.size }
+    .sum
 
 // ------------------------------------------------------------------------------
 
-def nextStateOnly(from:Cells):Cells =
-  val (to,flashedCoords) = nextState(from)
-  to
+def statesOnlyFlow(state: Cells): LazyList[Cells] = state #:: statesOnlyFlow(nextStateOnly(state))
 
 def resolveStar2(input: String): BigInt =
   val initialState = parse(input)
-
-  def states(state:Cells):LazyList[Cells]=
-    state#::states(nextStateOnly(state))
-
-  val found =
-    states(initialState)
-      .zipWithIndex
-      .find{case (state,index) => state.values.forall(_ == 0)}
-
-  found match
-    case None => 0
-    case Some((state,index)) => index
-
+  statesOnlyFlow(initialState).zipWithIndex
+    .collectFirst { case (state, index) if state.values.forall(_ == 0) => index }
+    .getOrElse(0)
 
 // ------------------------------------------------------------------------------
 
