@@ -1,4 +1,4 @@
-package dayXX
+package day13
 
 import helpers.*
 import zio.*
@@ -27,8 +27,8 @@ def resolveStar2(input: String): BigInt =
 
 // ------------------------------------------------------------------------------
 
-object PuzzleXXTest extends DefaultRunnableSpec {
-  val day  = "dayXX"
+object Puzzle13Test extends DefaultRunnableSpec {
+  val day  = "day13"
   def spec = suite(s"puzzle $day")(
     test("star#1") {
       for {

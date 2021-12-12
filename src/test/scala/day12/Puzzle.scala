@@ -24,6 +24,7 @@ case class Edge(from: Vertex, to: Vertex):
 type Graph = Map[Vertex, List[Vertex]]
 
 val startVertex = Vertex("start")
+val endVertex = Vertex("end")
 
 // ------------------------------------------------------------------------------
 
