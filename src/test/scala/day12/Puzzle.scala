@@ -48,6 +48,7 @@ def edgesToBiDirGraph(edges: List[Edge]): Graph =
 // ------------------------------------------------------------------------------
 
 def paths(graph: Graph) =
+  // NOT TAIL REC BUT REWORKED HERE : https://gist.github.com/dacr/69aae783d92ac68105dad9118d5f1b3e
   def walk(from: Vertex, path: List[Edge], smallVisited: Set[Vertex]): List[List[Edge]] =
     if from.isEnd then path::Nil
     else
@@ -64,6 +65,7 @@ def resolveStar1(input: String): BigInt =
 // ------------------------------------------------------------------------------
 
 def pathsStar2(graph: Graph) =
+  // NOT TAIL REC BUT REWORKED HERE : https://gist.github.com/dacr/69aae783d92ac68105dad9118d5f1b3e
   def walk(from: Vertex, path: List[Edge], smallVisited: Set[Vertex], smallException:Vertex, smallExceptionVisitedCount:Int): List[List[Edge]] =
     if from.isEnd then path::Nil
     else
