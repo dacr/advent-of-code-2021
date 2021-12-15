@@ -58,6 +58,7 @@ def resolveStar1(input: String): BigInt =
 // ------------------------------------------------------------------------------
 // REBOOT
 
+// TODO can be simplified !!
 case class Pair2(left: Char, right: Char)
 case class Count2(count: BigInt, leftCount: BigInt, rightCount: BigInt)
 type Rules2      = Map[Pair2, Char]
