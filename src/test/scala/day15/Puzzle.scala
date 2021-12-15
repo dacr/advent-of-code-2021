@@ -12,20 +12,21 @@ import scala.util.chaining.*
 
 // ------------------------------------------------------------------------------
 
-case class Vertex[A](id: A):
-  override def toString() = id.toString
+case class Vertex[A](content: A):
+  override def toString() = content.toString
 
 case class Edge[A](from: Vertex[A], to: Vertex[A]):
   override def toString() = s"$from-$to"
 
 type Graph[A] = Map[Vertex[A], List[Vertex[A]]]
-type Path[A]  = List[Edge[A]]
+
+type Path[A]  = List[Vertex[A]]
+type Cost=Int
 
 case class PartialPath[A](
-  current: Path[A],
-  visited: Set[Vertex[A]],
-  cost: Double,
-  risk: Int
+  current: List[Vertex[A]],
+  visited: Map[Vertex[A], Cost],
+  cost:Cost,
 )
 type PartialPaths[A] = List[PartialPath[A]]
 
@@ -33,41 +34,49 @@ def computePaths[A](
   graph: Graph[A],
   from: Vertex[A],
   to: Vertex[A],
-  revisitable: Vertex[A] => Boolean,
-  computeCost: A => Double,
-  computeRisk: A => Int
+  computeCost: Vertex[A] => Cost
 ): LazyList[Path[A]] =
-  def walk(partialPaths: PartialPaths[A], foundLowestScore:Double): LazyList[Path[A]] =
+  def walk(partialPaths: PartialPaths[A], lowestCostForVertex:Map[Vertex[A],Cost]): LazyList[Path[A]] =
     partialPaths match {
       case Nil => LazyList.empty
 
-      case PartialPath(currentPath, visited, currentCost, currentRisk) :: remainingPartialPaths =>
+      case PartialPath(currentPath, visited, currentCost) :: remainingPartialPaths =>
         currentPath match {
-          case Edge(currentFrom, currentTo) :: path if currentTo == to =>
-            val updatedLowest = min(currentCost, foundLowestScore)
-            println(s"$currentRisk   ($updatedLowest)")
-            currentPath #:: walk(remainingPartialPaths.filter(_.cost < updatedLowest), updatedLowest)
+          case currentTo :: path if currentTo == to =>
+            val updatedLowest = min(currentCost, lowestCostForVertex(currentTo))
+            val updatedLowestMap = lowestCostForVertex+(to->updatedLowest)
+            currentPath #:: walk(remainingPartialPaths.filter(_.cost <= updatedLowest), updatedLowestMap)
 
-          case Edge(currentFrom, currentTo) :: path =>
-            val children        = graph(currentTo).filterNot(_ == currentTo).filterNot(visited)
-            val newVisited      = visited ++ Option(currentTo).filterNot(revisitable)
-            val newPartialPaths = children.collect { case child if computeCost(currentTo.id) + currentCost < foundLowestScore =>
+          case currentFrom :: path =>
+            val newPartialPaths:PartialPaths[A] = graph(currentFrom).collect {
+              case child if !visited.contains(child) &&
+                computeCost(child) + currentCost < lowestCostForVertex(child) =>
+              val newCost = computeCost(child) + currentCost
               PartialPath(
-                Edge(currentTo, child) :: currentPath,
-                newVisited,
-                computeCost(currentTo.id) + currentCost,
-                computeRisk(currentTo.id) + currentRisk
+                child :: currentPath,
+                visited+(child->newCost),
+                newCost
               )
             }
+            val updatedLowestCostForVertex =
+              newPartialPaths.foldLeft(lowestCostForVertex){case (current,partialPath) =>
+                val child = partialPath.current.head
+                val cost = partialPath.cost
+                current+(child->min(cost,current(child)))
+              }
+
             val allPartialPaths =
-              (newPartialPaths ++ remainingPartialPaths)
-                //.sortBy(partialPath => - partialPath.current.size )
-            walk(allPartialPaths, foundLowestScore)
+              (remainingPartialPaths ++ newPartialPaths)
+                .filterNot{path =>
+                  path.current.exists(vertex => path.visited(vertex) > updatedLowestCostForVertex(vertex) )
+                }
+
+            walk(allPartialPaths, updatedLowestCostForVertex)
         }
     }
-
-  val bootpaths = graph(from).map(to => PartialPath(Edge(from, to) :: Nil, Set(from), computeCost(to.id), computeRisk(to.id)))
-  walk(bootpaths, Double.MaxValue)
+  val initialLowestCosts = graph.keys.map(vertx => vertx->Int.MaxValue).toMap
+  val bootpaths = graph(from).map(child => PartialPath(child :: Nil, Map(child->computeCost(child)), computeCost(child)))
+  walk(bootpaths, initialLowestCosts)
 
 // ------------------------------------------------------------------------------
 type Coord = (Int, Int)
@@ -85,9 +94,9 @@ def riskAt(grid: Grid, coord: Coord): Int =
 def coordsAroundOf(grid: Grid, coord: Coord): Iterable[Coord] =
   val (x, y) = coord
   Seq(
-    //grid.lift(y - 1).flatMap(_.lift(x)).map(_ => x -> (y - 1)),
+    grid.lift(y - 1).flatMap(_.lift(x)).map(_ => x -> (y - 1)),
     grid.lift(y + 1).flatMap(_.lift(x)).map(_ => x -> (y + 1)),
-    //grid.lift(y).flatMap(_.lift(x - 1)).map(_ => (x - 1) -> y),
+    grid.lift(y).flatMap(_.lift(x - 1)).map(_ => (x - 1) -> y),
     grid.lift(y).flatMap(_.lift(x + 1)).map(_ => (x + 1) -> y)
   ).flatten
 
@@ -102,24 +111,23 @@ case class Cell(coord: Coord, risk: Int)
 def gridToGraph(grid: Grid): Graph[Cell] =
   allCoords(grid).toList.map { coord =>
     val cell = Cell(coord, riskAt(grid, coord))
-    Vertex(cell) -> coordsAroundOf(grid, coord).map(aroundCoord => Vertex(Cell(aroundCoord, riskAt(grid, aroundCoord)))).toList
+    Vertex(cell) ->
+      coordsAroundOf(grid, coord)
+        .map(aroundCoord => Vertex(Cell(aroundCoord, riskAt(grid, aroundCoord))))
+        .toList
+        .sortBy(_.content.risk)
   }.toMap
 
 // ------------------------------------------------------------------------------
 
 def pathCost(path: Path[Cell]): Int =
+  println(path.map(_.content.risk).mkString("+"))
   def compute(current: Path[Cell], accu: Int = 0): Int =
     current match {
       case Nil            => accu
-      case a :: remaining => compute(remaining, accu + a.to.id.risk)
+      case a :: remaining => compute(remaining, accu + a.content.risk)
     }
   compute(path)
-
-def cellCost(width: Int, height: Int)(cell: Cell): Double =
-  val (x, y) = cell.coord
-  //cell.risk
-  //10*cell.risk + sqrt(pow((width - x), 2) + pow((height - y), 2))
-  10 * cell.risk + 2*(width - x - 1) + 2*(height - y - 1)
 
 def resolveStar1(input: String): BigInt =
   val grid   = parse(input)
@@ -130,11 +138,11 @@ def resolveStar1(input: String): BigInt =
   val fromCoord = 0           -> 0
   val toCoord   = (width - 1) -> (height - 1)
 
-  val fromVertex = graph.keys.find(_.id.coord == fromCoord).get // TODO of course dangerous
-  val toVertex   = graph.keys.find(_.id.coord == toCoord).get   // TODO of course dangerous
+  val fromVertex = graph.keys.find(_.content.coord == fromCoord).get // TODO of course dangerous
+  val toVertex   = graph.keys.find(_.content.coord == toCoord).get   // TODO of course dangerous
   println(Edge(fromVertex, toVertex))
-  val paths      = computePaths[Cell](graph, fromVertex, toVertex, vertx => false, cellCost(width, height), _.risk)
-  paths.map(pathCost).take(1000).min
+  val paths      = computePaths[Cell](graph, fromVertex, toVertex, _.content.risk)
+  paths.map(pathCost).min
 
 // ------------------------------------------------------------------------------
 
@@ -155,8 +163,9 @@ object Puzzle15Test extends DefaultRunnableSpec {
       } yield assertTrue(exampleResult == BigInt(40))
         && assertTrue(puzzleResult < BigInt(780))
         && assertTrue(puzzleResult < BigInt(736))
-        && assertTrue(puzzleResult < BigInt(500))
-        && assertTrue(puzzleResult == BigInt(0))
+        && assertTrue(puzzleResult != BigInt(500))
+        && assertTrue(puzzleResult != BigInt(577))
+        && assertTrue(puzzleResult == BigInt(462))
     },
     test("star#2") {
       for {
@@ -164,7 +173,7 @@ object Puzzle15Test extends DefaultRunnableSpec {
         exampleResult1 = resolveStar2(exampleInput1)
         puzzleInput   <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
         puzzleResult   = resolveStar2(puzzleInput)
-      } yield assertTrue(exampleResult1 == BigInt(0)) && assertTrue(puzzleResult == BigInt(0))
+      } yield assertTrue(exampleResult1 == BigInt(315)) && assertTrue(puzzleResult == BigInt(0))
     } @@ ignore
   )
 }
