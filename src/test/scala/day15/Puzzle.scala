@@ -67,9 +67,9 @@ def computePaths[A](
 
             val allPartialPaths =
               (remainingPartialPaths ++ newPartialPaths)
-                .filterNot{path =>
-                  path.current.exists(vertex => path.visited(vertex) > updatedLowestCostForVertex(vertex) )
-                }
+//                .filterNot{path =>
+//                  path.current.exists(vertex => path.visited(vertex) > updatedLowestCostForVertex(vertex) )
+//                }
 
             walk(allPartialPaths, updatedLowestCostForVertex)
         }
@@ -121,7 +121,7 @@ def gridToGraph(grid: Grid): Graph[Cell] =
 // ------------------------------------------------------------------------------
 
 def pathCost(path: Path[Cell]): Int =
-  println(path.map(_.content.risk).mkString("+"))
+  //println(path.map(_.content.risk).mkString("+"))
   def compute(current: Path[Cell], accu: Int = 0): Int =
     current match {
       case Nil            => accu
@@ -140,14 +140,38 @@ def resolveStar1(input: String): BigInt =
 
   val fromVertex = graph.keys.find(_.content.coord == fromCoord).get // TODO of course dangerous
   val toVertex   = graph.keys.find(_.content.coord == toCoord).get   // TODO of course dangerous
-  println(Edge(fromVertex, toVertex))
   val paths      = computePaths[Cell](graph, fromVertex, toVertex, _.content.risk)
   paths.map(pathCost).min
 
 // ------------------------------------------------------------------------------
 
+def extend(from:Grid):Grid =
+  val width  = from.head.size
+  val height = from.size
+  0.until(height*5).map(y => 0.until(width*5).map{x =>
+    val refValue = from(y%height)(x%width)
+    val gridx = x/width
+    val gridy = y/height
+    (refValue+gridx+gridy-1)%9+1
+  })
+
+
 def resolveStar2(input: String): BigInt =
-  0
+  val grid   = extend(parse(input))
+  println(grid.map(_.mkString).mkString("\n"))
+  val graph  = gridToGraph(grid)
+  val width  = grid.head.size
+  val height = grid.size
+
+  val fromCoord = 0           -> 0
+  val toCoord   = (width - 1) -> (height - 1)
+
+  val fromVertex = graph.keys.find(_.content.coord == fromCoord).get // TODO of course dangerous
+  val toVertex   = graph.keys.find(_.content.coord == toCoord).get   // TODO of course dangerous
+  println(Edge(fromVertex, toVertex))
+  val paths      = computePaths[Cell](graph, fromVertex, toVertex, _.content.risk)
+  paths.map(pathCost).min
+
 
 // ------------------------------------------------------------------------------
 
@@ -172,8 +196,9 @@ object Puzzle15Test extends DefaultRunnableSpec {
         exampleInput1 <- Helpers.readFileContent(s"data/$day-example-1.txt")
         exampleResult1 = resolveStar2(exampleInput1)
         puzzleInput   <- Helpers.readFileContent(s"data/$day-puzzle-1.txt")
-        puzzleResult   = resolveStar2(puzzleInput)
-      } yield assertTrue(exampleResult1 == BigInt(315)) && assertTrue(puzzleResult == BigInt(0))
-    } @@ ignore
+        //puzzleResult   = resolveStar2(puzzleInput)
+      } yield assertTrue(exampleResult1 == BigInt(315))
+        //&& assertTrue(puzzleResult == BigInt(0))
+    }
   )
 }
