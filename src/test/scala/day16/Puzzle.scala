@@ -37,15 +37,11 @@ def binToInt(in: String): Int = java.lang.Integer.parseInt(in, 2)
 
 case class Header(version:Int, typeId:Int)
 
-def decodeHeader(bits:String):Header =
-  val version = binToInt(bits.substring(0,3))
-  val typeId = binToInt(bits.substring(3, 6))
+def decodeHeader(input:String):Header =
+  val version = binToInt(input.substring(0,3))
+  val typeId = binToInt(input.substring(3, 6))
   Header(version, typeId)
 
-// USING ZSTREAM ?
-def logic(input:String) =
-  ZStream
-    .fromIterable(toBits(input))
 
 
 // ------------------------------------------------------------------------------
